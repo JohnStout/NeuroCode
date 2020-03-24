@@ -9,6 +9,15 @@
 % number and columns being observation
 % y: a matrix that you want to sort by. Same formatting as above
 %
+% ~~~ VERY IMPORTANT ~~~
+% This analysis is extremely misleading unless you average population vectors across trials
+% like the buzsaki paper on time cells did. If you normalize each population vector to its
+% peak rate within the epoch you're interested in examining, you will observe a beautiful diagonal
+% band. But this diagonal band is more likely an artifact of probability, that what the brain is doing.
+% This code forces a vector to be between 0 and 1. Therefore, future iterations of this code will require
+% a matrix for each individual neuron, then do some sort of averaging to make this better reflect true
+% neuronal activity and not artificially determined relevant activity.
+%
 % OUTPUTS:
 % figure
 %
