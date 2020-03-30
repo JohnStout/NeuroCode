@@ -23,7 +23,7 @@ function [FRdata] = svmFormatting_trajectoryCoding_binnedStem(Datafolders,int_na
     cd(Datafolders);
     folder_names = dir;
     
-    if task_type == 'DNMP'
+    if strfind(task_type,'DNMP') == 1
         prompt = 'Sample or choice? [S/C] ';
         trial_type = input(prompt,'s');
     end
@@ -52,8 +52,14 @@ function [FRdata] = svmFormatting_trajectoryCoding_binnedStem(Datafolders,int_na
 
             % load animal parameters 
             load(int_name);
-            load(vt_name,'ExtractedX','ExtractedY','TimeStamps_VT');
-            TimeStamps = TimeStamps_VT; % rename
+            vtData = load(vt_name);
+            ExtractedX = vtData.ExtractedX;
+            ExtractedY = vtData.ExtractedY;
+            try
+                TimeStamps = vtData.TimeStamps_VT; % rename
+            catch % sometimes the ..._VT variable is not defined
+                TimeStamps = vtData.TimeStamps;
+            end
             
             % correct tracking errors     
             [ExtractedX,ExtractedY] = correct_tracking_errors(datafolder);             
@@ -65,21 +71,26 @@ function [FRdata] = svmFormatting_trajectoryCoding_binnedStem(Datafolders,int_na
             Int = Int(find(Int(:,4)==0),:);
 
             % if DNMP was selected, separate sample and choice trials
-            if task_type == 'DNMP'
+            if strfind(task_type,'DNMP') == 1
                 if trial_type == 'S'
                     trials = (1:2:size(Int,1));
                 elseif trial_type == 'C'
                     trials = (2:2:size(Int,1)); 
                 end
                 task_params = 2;
-            elseif task_type == 'CA/DA/CD'
+            elseif strfind(task_type,'DA') == 1 || strfind(task_type,'CA') == 1 || strfind(task_type,'CD') == 1
                 task_params = 1;
             end
             
             %% create bins
-            ymin = 135; % do not underestimate - you'll end up in start-box
-            ymax = 400; % over estimate - this doesn't hurt anything
-            bins = round(linspace(ymin,ymax,numbins));
+            if stem_dir == 'Y'
+                PosMin = 135; % do not underestimate - you'll end up in start-box
+                PosMax = 400; % over estimate - this doesn't hurt anything
+            elseif stem_dir == 'X'
+                PosMin = 215;
+                PosMax = 641;
+            end
+            bins = round(linspace(PosMin,PosMax,numbins));
 
             %% Create firing rate arrays
                 if task_params == 2 
