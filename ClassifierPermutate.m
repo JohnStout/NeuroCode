@@ -66,7 +66,7 @@
  numbins = 7; % numbins will be 1 less than when you estimate it
  numObs  = 6; % how many rows you got (ie trials). Use the minimum number. % 15 for sample/choice
  data1   = FRdata.lefts; % to get this, run formatData_Cleaning_...
- data2   = FRdata.rights;
+ data2   = FRdata.rights; 
  
  % backup storage
  if controlLeftRight == 1
