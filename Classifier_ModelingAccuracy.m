@@ -11,7 +11,7 @@
 % written by John Stout
 
 %% prep stuff
-clear; clc; %close all
+clear; clc; close all
 cd('X:\07. Manuscripts\In preparation\Stout - JNeuro\Data\mPFC 2-2020')
 
 % if a dataName error comes up, you've loaded the wrong file (an old one)
@@ -21,6 +21,7 @@ cd('X:\07. Manuscripts\In preparation\Stout - JNeuro\Data\mPFC 2-2020')
 load('data_numNeurons_choicelvR_5000_TjunctionHighRate')
 %load('data_numNeurons_choiceLvR_5000Iterations_earlyStemBin')
 %load('data_numNeurons_choiceLvR_HighRate_5000Iterations_secondBin')
+%load('data_numNeurons_sampleLvR_5000Iterations_Tjunction')
 
 %% Plotting and modeling
 % NOTE - selectIdx variable has the number of added neurons. So if
@@ -139,6 +140,7 @@ for i = 1:length(futureAdded)
 end
 
 % predicted intervals
+clear ci
 ci = predint(popModelAll,logXfuture);
 
 % transform to percentage data - this is the antilog
@@ -148,6 +150,7 @@ for i = 1:length(predFuture)
 end
 
 % transform confidence intervals - antilog
+clear ciConv
 for i = 1:size(ci,1)
     for ii = 1:size(ci,2)
         ciConv(i,ii) = 10^(ci(i,ii)/10);
@@ -157,6 +160,7 @@ end
 % subtract/add from mean - the CI is given as actual estimates surrounding
 % the mean, but for you to plot it, you'll need the difference from the
 % mean and CIs
+clear ciFromMean ciLogFrmMean
 for i = 1:size(ci,1)
     for ii = 1:size(ci,2)
         ciFromMean(i,ii) = AccuracyFuture(i)-ciConv(i,ii);
@@ -264,8 +268,71 @@ for i = 1:length(futureAdded)
 end 
 set(gca,'FontSize',12)
 %title([num2str(numNeurons),' Added in increments of 2'])
-ylim([30 110])
+ylim([30 120])
 
 % this is the least number of neurons required to reach significance
 LeastNumReqPredIdx = min(find(pFut<0.05));
 LeastNumReqPred = futureAdded(LeastNumReqPredIdx);
+
+%% future accuracy on a small sample size
+% number of neurons to model future features
+numNeurons  = 50;
+numSelected = find(selectIdx == numNeurons);
+
+% least squares regression - SS stands for 'small sample'
+clear popModelSS gofModelSS outModelSS
+[popModelSS,gofModelSS,outModelSS] = fit(logX(1:numSelected)',logY(1:numSelected)','poly1');
+
+% predicted Y data
+clear predFutSS
+for i = 1:length(logX)
+    predFutSS(i) = popModelSS.p1*logX(i) + popModelSS.p2;
+end
+
+% predicted intervals
+clear ciSS
+ciSS = predint(popModelSS,logX);
+
+% transform to percentage data
+clear AccuracyConvertSS
+for i = 1:length(predY)
+    AccuracyConvertSS(i) = 10^(predFutSS(i)/10);
+end
+
+% modeling significance
+% ztest
+clear pSS statSS
+for neuri = 1:length(x_label)
+    [~,pSS(neuri),~,statSS{neuri}] = ztest(AccuracyConvertSS(neuri),mean(chance_dist),std(chance_dist));
+end
+
+% reconverted
+figure('color','w'); hold on;
+s2 = scatter(selectIdx,svm_avg);
+s2.MarkerFaceColor = [0.9 0.9 0.9];
+s2.MarkerEdgeColor = 'k';
+s1 = scatter(selectIdx,AccuracyConvertSS);
+s1.MarkerFaceColor = [0.7 0.7 0.7];
+s1.MarkerEdgeColor = 'r';
+% plot significance of original data
+line_data = NaN([1 length(x_label)]);
+Yminmax = get(gca,'Ylim');
+line_data(find(p<0.05))=Yminmax(2);
+for i = 1:length(x_label)
+    y = line_data(i);
+    line([x_label(i)-2,x_label(i)+2],[y+2,y+2],'Color','k','LineWidth',2)
+end 
+% plot significance of log data
+line_data = NaN([1 length(x_label)]);
+Yminmax = get(gca,'Ylim');
+line_data(find(pSS<0.05))=Yminmax(2);
+for i = 1:length(x_label)
+    y = line_data(i);
+    line([x_label(i)-2,x_label(i)+2],[y+1,y+1],'Color','r','LineWidth',2)
+end 
+set(gca,'FontSize',12)
+title([num2str(numNeurons),' Added in increments of 5'])
+LeastNumReqPredSS = selectIdx(find(pSS<0.05))
+
+
+

@@ -5,11 +5,14 @@
 % heavily on T-junction and task phase discrimination as this was a robust
 % effect.
 
+%% Change these things!
+
 % shuffle seed
 rng('shuffle')
 clear; clc
 
-dataName = 'data_mPFC_choiceTrajectory_5000Iterations_highRate';
+% this is the output from ClassifierPermutate
+dataName = 'data_mPFC_taskPhase_7bins_classification_SamRvsChoL';
 
 % select a bin to draw from
 binDraw = 7;
@@ -39,6 +42,7 @@ selectIdx = 5:5:roundDown;
 % How many iterations?
 Niterat = 5000;
 
+%% analyze
 for numi = 1:length(selectIdx)
     % run the classifier on all combinations of 1 neuron, all combinations of 2 neurons, all combinations of 3 neurons, etc...
     % due to the time it would take to do this, the data will be compared
