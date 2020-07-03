@@ -91,9 +91,10 @@ function [FRdata] = svmFormatting_trajectoryCoding_MazePlace(Datafolders,int_nam
                     for triali = 1:length(trials)    
 
                         % get an index of timestamps and timestamps
-                        times_around = TimeStamps(find(TimeStamps > Int(trials(triali),6) & ...
-                            TimeStamps < Int(trials(triali),2))); 
+                        times_around = TimeStamps(find(TimeStamps > Int(trials(triali),7) & ...
+                            TimeStamps < Int(trials(triali),8))); 
 
+                        try
                             % index of the spikes
                             numspikes_ind = find(spikeTimes>times_around(1) & ...
                                 spikeTimes<times_around(end));
@@ -102,7 +103,7 @@ function [FRdata] = svmFormatting_trajectoryCoding_MazePlace(Datafolders,int_nam
                             numspikes = length(numspikes_ind);
                             
                             % time diff
-                            time_temp = Int(trials(triali),2) - Int(trials(triali),6); 
+                            time_temp = Int(trials(triali),8) - Int(trials(triali),7); 
                             time_diff = time_temp/1e6;
                             % storage - FR bins shell1 = trial type
                             % shell 2 = session, shell3 =
@@ -110,6 +111,9 @@ function [FRdata] = svmFormatting_trajectoryCoding_MazePlace(Datafolders,int_nam
                             % trials columns are bins, each element is the
                             % corresponding firing rate
                             FRbins{nn-2}{ci}(triali) = numspikes/time_diff;
+                        catch
+                            FRbins{nn-2}{ci}(triali) = NaN;
+                        end   
                     end 
                     
                     % find left and right trials

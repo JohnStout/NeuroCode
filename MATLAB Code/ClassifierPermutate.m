@@ -174,6 +174,8 @@ if pseudosimult == 1
                 ylabel(['bin ', num2str(bini)])
             end
             xlabel('Classifier Accuracy')
+            
+    % train on 75% test on 25%, include same size arrays for the classes
     elseif method_75Training_25Testing == 1 && downsample_data == 1  
         
         disp('training with 75% testing with 25% with iteratively down-sampled data selected')
@@ -182,9 +184,9 @@ if pseudosimult == 1
             % display
             disp('Controlling for different numbers of trials by permutation')
             pause(1)
-
+            
             % generate labels
-            labels = vertcat(ones(numObs,1),-ones(numObs,1));                
+            labels = vertcat(ones(numObs,1),-ones(numObs,1));    
 
             % shuffle trials
             for n = 1:1000  
@@ -289,8 +291,7 @@ if pseudosimult == 1
                 set(gca,'FontSize',9)
                 ylabel(['bin ', num2str(bini)])
             end
-            xlabel('Classifier Accuracy')        
-        
+            xlabel('Classifier Accuracy')  
     end
     
     if leave1out == 1

@@ -11,9 +11,8 @@ Created on Tue Jan  8 13:31:58 2019
 import scipy.io as sio
 import os
 sessions_folder = 'X:/01.Experiments/John n Andrew/Dual optogenetics w mPFC recordings/All Subjects - DNMP/Good performance/Medial Prefrontal Cortex'
-session = '/Count Choc_No Light 10-19-17 AC units'
+session = '/Baby Groot 9-16-18'
 os.chdir(sessions_folder+session) # cd equivalent
-
 
 # load Int and TimeVariables dictionaries
 IntVars       = sio.loadmat('Int_file.mat')
