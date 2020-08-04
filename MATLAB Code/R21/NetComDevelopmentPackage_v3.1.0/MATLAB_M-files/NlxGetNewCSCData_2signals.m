@@ -81,6 +81,37 @@ function [succeeded, dataArray, timeStampArray, channelNumberArray, samplingFreq
 		samplingFreqArray_signal2 = [];
 		numValidSamplesArray_signal2 = [];
     end  
+ %{   
+    % sometimes, the sample sizes will differ, we must account for this.   
+    if timeStampArray_signal1 ~= timeStampArray_signal2
+        
+        % create an index that reflects the mismatch (idx will have a 1)
+        idx = timeStampArray_signal1 ~= timeStampArray_signal2;
+        
+        % find instances where idx equals 1
+        idxRem = find(idx == 1);
+        
+        if numel(timeStampArray_signal1) < numel(timeStampArray_signal2)
+            
+            % remove the timestamps
+            timeStampArray_signal2(idxRem)=[];
+            
+            % remove the necessary signal
+            dataArray_signal2(numValidSamplesArray_signal2(1)+1:numel(dataArray_signal2))=[];
+        
+    end
+    
+    if numel(timeStampArray_signal1) <  numel(timeStampArray_signal2)
+         
+        % find the timestamp match
+        idx = dsearchn(timeStampArray_signal2',timeStampArray_signal1);
+        
+        timeStampArray_signal2(idx)=[]
+        
+    elseif numel(timeStampArray_signal1) >  numel(timeStampArray_signal2)
+        
+    end
+%}
     
     % set up final return arrays - keep these as matrices
     dataArray            = [];
