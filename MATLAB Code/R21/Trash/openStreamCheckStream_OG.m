@@ -34,28 +34,29 @@ end
 
 % extract lfp data - note that this has to be sampled regularly to prevent
 % a streaming disconnect
-[succeeded, dataArray, timeStampArray, channelNumberArray, samplingFreqArray, ...
-    numValidSamplesArray, numRecordsReturned, numRecordsDropped ] = NlxGetNewCSCData_2signals(LFP1name, LFP2name);  
+[succeeded1, dataArray1, timeStampArray1, channelNumberArray1, samplingFreqArray1, ...
+    numValidSamplesArray1, numRecordsReturned1, numRecordsDropped1 ] = NlxGetNewCSCData(LFP1name);  
+[succeeded2, dataArray2, timeStampArray2, channelNumberArray2, samplingFreqArray2, ...
+    numValidSamplesArray2, numRecordsReturned2, numRecordsDropped2 ] = NlxGetNewCSCData(LFP2name);  
 
 % check 2 - check that data is being opened
-if succeeded(1) == 1 && succeeded(2) == 1
+if succeeded1 == 1 && succeeded2 == 1
     disp('CSC real-time acquisition up and running!');
 end
     
 % check 3 - check that the timestamps and sizes are identical
-sizeCheck = length(dataArray(1,:)) == length(dataArray(2,:));   % the lengths of these vectors should be identical
-timeCheck = isempty(find((timeStampArray(1,:)-timeStampArray(2,:))~=0)); % the difference between timestamps should all be zero (ie identical timestamps)
+sizeCheck = length(dataArray1) == length(dataArray2);   % the lengths of these vectors should be identical
+timeCheck = isempty(find((timeStampArray1-timeStampArray2)~=0)); % the difference between timestamps should all be zero (ie identical timestamps)
 if sizeCheck == 0 && timeCheck == 0
     disp('Error in the sampling of data - data not being sampled simultaneously')
     return
 end
 
-% get sampling rate - this should only require one signal because the data
-% should all be sampled at the same rate
-srate = double(mode(samplingFreqArray(1,:)));
+% get sampling rate
+srate = double(mode(samplingFreqArray1));
 
-% check 4 - in the case where your lfp is not sampled at the same rate
-srateCheck = double(mode(samplingFreqArray(1,:))) == double(mode(samplingFreqArray(2,:)));
+% check 4
+srateCheck = double(mode(samplingFreqArray1)) == double(mode(samplingFreqArray2));
 if srateCheck == 0
     disp('Defined CSCs are not sampled at the same rate')
     return
