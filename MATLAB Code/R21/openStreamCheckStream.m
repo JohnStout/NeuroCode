@@ -5,11 +5,18 @@
 % this code checks:
 %   1) That streaming is open
 %   2) That CSC data streaming is function
-%   3) That CSC data streaming is occuring at the exact same time
+%   3) That CSC data streaming is occuring at an almost identical time
 %   4) That the sampling rate is identical between CSCs
 %
 % Note: Sampling rate was considered by taking the mode, therefore if
 % fluctuations occur (which they shouldn't), it would not be accounted for.
+%
+% In 3) note that I mentioned its almost identical in time. The two signals
+% are almost perfectly identical, with about perfect correlations (see
+% checkLFPsamples.m). The reason it is 'almost identical' is because the
+% voltage can fluctuate at a microscopic scale. This is not something that
+% we can get around as of yet, and as you will see by running
+% checkLFPsamples.m, it's not something worth worrying over.
 %
 % INPUTS: 
 % LFP1name and LFP2name: The names (as a string variable) of the CSC
@@ -48,6 +55,7 @@ timeCheck = isempty(find((timeStampArray(1,:)-timeStampArray(2,:))~=0)); % the d
 if sizeCheck == 0 && timeCheck == 0
     disp('Error in the sampling of data - data not being sampled simultaneously')
     return
+else
 end
 
 % get sampling rate - this should only require one signal because the data

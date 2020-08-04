@@ -7,3 +7,5 @@ NetCom Version 3.1.0
 -* NOTICE  *- (mm/dd/yyyy): 08/04/2020 At Time: 10:40:31 - NetworkNodeClient::ConnectToServer - NetCom client connected to server 192.168.3.100 on port 26201.
 -* NOTICE  *- (mm/dd/yyyy): 08/04/2020 At Time: 10:40:40 - NodeConnectionClient::AddStreamObject - Object CSC1 has been added to our stream list. Stream Type: CSC
 -* NOTICE  *- (mm/dd/yyyy): 08/04/2020 At Time: 10:40:40 - NodeConnectionClient::AddStreamObject - Object CSC2 has been added to our stream list. Stream Type: CSC
+Log File Closed - End of File
+
