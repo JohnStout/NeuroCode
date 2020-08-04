@@ -5,9 +5,9 @@ clear; clc
 github_download_directory = 'C:\Users\jstout\Documents\GitHub\NeuroCode\MATLAB Code\R21';
 addpath(github_download_directory);
 
-% connect to netcom
+% connect to netcom - pathName will be unique to your download location
 pathName   = 'C:\Users\jstout\Documents\GitHub\NeuroCode\MATLAB Code\R21\NetComDevelopmentPackage_v3.1.0\MATLAB_M-files';
-serverName = '192.168.3.100';
+serverName = '192.168.3.100'; % server name can be found: cmd > ipconfig > IPv4
 connect2netcom(pathName,serverName)
 
 % open a stream to interface with Nlx objects - this is required
