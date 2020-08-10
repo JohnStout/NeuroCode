@@ -27,7 +27,7 @@ connect2netcom(pathName,serverName)
 
 % define LFPs to use
 LFP1name = 'CSC1';
-LFP2name = 'CSC2';
+LFP2name = 'CSC9';
 
 % check various features of streaming - this includes srate checks.
 % Sometimes, when this is initially run, you'll get errors
@@ -60,7 +60,7 @@ params.fpass  = [4 12];
 % start with this variable set to zero, it tells the code whether to clear
 % the stream
 clearIt = 0;
-for i = 1:100
+for i = 1:1000
     
     tic;
     if i == 1
@@ -96,13 +96,31 @@ for i = 1:100
     timings(i) = length(coh)/srate;
     
     % take averages
-    coh_theta = mean(coh);
-    coh_phase = mean(phase);
+    coh_theta(i) = mean(coh);
+    coh_phase(i) = mean(phase);
     outtoc(i) = toc;
     
     disp(['loop # ',num2str(i)])
     
 end 
+
+figure('color','w')
+stem(coh_theta)
+ylabel('Coherency')
+xlabel('250ms increment')
+title(['Theta (',num2str(params.fpass),'Hz)', ' with tapers ',num2str(params.tapers)])
+
+figure('color','w')
+plot((coh_theta),'k')
+ylabel('Coherency')
+xlabel('250ms increment')
+title(['Theta (',num2str(params.fpass),'Hz)', ' with tapers ',num2str(params.tapers)])
+
+figure('color','w')
+stem(coh_theta(1:100))
+ylabel('Coherency')
+xlabel('250ms increment')
+title(['Theta (',num2str(params.fpass),'Hz)', ' with tapers ',num2str(params.tapers)])
 
 % remove the very first 2 events, they will be excluded anyway. They take
 % too long bc of initializing stuff
@@ -114,11 +132,6 @@ ylabel('Number of streaming events')
 xlabel('Time (ms) to stream and calculate coherence')
 box off
 title(['Events streamed at a rate of ', num2str(amountOfData),' seconds'])
-
-    
-    
-
-
 
 % remove path of github download directory
 rmpath(github_download_directory);
