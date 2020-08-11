@@ -29,10 +29,13 @@ connect2netcom(pathName,serverName)
 LFP1name = 'CSC1';
 LFP2name = 'CSC9';
 
+% sometimes you'll get an error here, still trying to figure out why. It
+% has something to due with the duration of sampling.
+
 % check various features of streaming - this includes srate checks.
 % Sometimes, when this is initially run, you'll get errors
 openStreamCheckStream(LFP1name,LFP2name);
-
+        
 % clear the working stream via netcom - funDur is a variable to track time
 funDur.clearStream = clearStream(LFP1name,LFP2name);
 
@@ -55,12 +58,18 @@ timing(2,:) = length(dataArray(2,:))/srate;
 % for multitapers
 params.tapers = [2 3];
 params.Fs     = srate;
-params.fpass  = [4 12];
+params.fpass  = [5 9];
+
+% define a looping time
+loop_time = 2; % minutes
+
+% define for loop
+looper = (loop_time*60)/amountOfData; % N minutes * 60sec/1min * (1 loop is about .250 ms of data)
 
 % start with this variable set to zero, it tells the code whether to clear
 % the stream
 clearIt = 0;
-for i = 1:1000
+for i = 1:looper
     
     tic;
     if i == 1
@@ -100,7 +109,7 @@ for i = 1:1000
     coh_phase(i) = mean(phase);
     outtoc(i) = toc;
     
-    disp(['loop # ',num2str(i)])
+    disp(['loop # ',num2str(i),'/',num2str(looper)])
     
 end 
 
