@@ -48,7 +48,12 @@ funDur.clearStream = clearStream(LFP1name,LFP2name);
 % 1-3cycles. Thats not a whole lot of theta cycles to detect coherence and
 % may induce high coherence due to low number of cycles. Therefore,
 % consider using .5-1 per event, then using a threshold of 1 event being
-% high coherence. 
+% high coherence. We need to test the distribution of coherence events.
+% Therefore, acquire data and calculate coherence using this script, then
+% open SCRIPT_determining_threshold to plot the results. Note that if the
+% sampling event exceeds .5, doubling to 1 or adding a multiple of 4 to
+% .75seconds, its okay because coherence has been high for a while. Its
+% just a confound. Sometimes, this jump in sampling occurs.
 amountOfData = .5; % seconds
 pause(amountOfData); % pause for the amount of time you want to get data from
 [succeeded, dataArray, timeStampArray, channelNumberArray, samplingFreqArray, ...
