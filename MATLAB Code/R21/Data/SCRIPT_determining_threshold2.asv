@@ -7,7 +7,7 @@
 clear; clc;
 
 % load in example data
-load('data_example1_20minRec')
+dataIn = load('data_example1_20minRec')
 
 % coh_theta: vector array of coherence estimates
 % threshold: a scalar value indicating the threshold set according to
@@ -15,8 +15,13 @@ load('data_example1_20minRec')
 % threshold_indicator: can be 'greater than' or 'less than'. This tells the
 %                        code to find instances greater than or less than
 %                        the threshold you set.
+% timing: a scalar indicating the time of the data in consideration. To get
+%           this, divide the length of 
 
-function [] = detectCoherence(coh_theta,threshold,threshold_indicator)
+coh_theta = dataIn.coh_theta;
+threshold = 1;
+threshold_indicator = 'greater than';
+timings = dataIn.timings;
 
 % get average coherence
 coh_theta_avg = mean(coh_theta);
@@ -24,27 +29,15 @@ coh_theta_avg = mean(coh_theta);
 % get standard deviations
 coh_theta_std = zscore(coh_theta);
 
-% find instances where std > 1
-threshold1 = 1;
-above_threshold = find(coh_theta_std > threshold1);
+% find instances where std > threshold
+if contains(threshold_indicator,'greater than')
+    threshold_met = find(coh_theta_std > threshold);
+elseif contains(threshold_indicator,'less than')
+    threshold_met = find(coh_theta_std < threshold);
+end    
 
 % get coherence values
-coh_above_threshold = coh_theta(above_threshold);
-
-% -- less than threshold -- %
-thresholdLow = -1;
-lower_threshold = find(coh_theta_std < thresholdLow);
-
-% get coherence values
-coh_below_threshold = coh_theta(lower_threshold);
-
-% --  find instances where std > 2 -- %
-threshold2 = 2;
-above_threshold = find(coh_theta_std > threshold2);
-
-% get coherence values
-coh_above_threshold = coh_theta(above_threshold);
-
+coh_above_threshold = coh_theta(threshold_met);
 
 % -- we should set a criteria for time above threshold1 -- %
 
@@ -52,10 +45,10 @@ coh_above_threshold = coh_theta(above_threshold);
 % variable that tells us where our criteria starts, and where it ends, such
 % that the first element is the start index and second element is the end
 % of the first event (but the second element does NOT reach threshold).
-[~, ~, possible_events] = RunLength(coh_theta_std > threshold1);
+[~, ~, possible_events] = RunLength(coh_theta_std > threshold);
 
 % sometimes the first value doesn't meet threshold
-if coh_theta_std(possible_events(1)) <= threshold1
+if coh_theta_std(possible_events(1)) <= threshold
     possible_events(1) = [];
 end
 
@@ -71,38 +64,34 @@ endPos    = possible_events(2:2:length(possible_events)); % note that the endPos
 % be found in the timing variable in the workspace
 eventDur  = endPos-startPos;
 
-% convert to time
-eventDur_time = eventDur*timing(1);
+% account for timings - note this is different from above, so not too
+% redundant
+idx_start = possible_events(1:2:length(possible_events));
+idx_end   = possible_events(2:2:length(possible_events))-1; % -1 bc we want to include only events that met criteria
 
-
-
-% -- less than 1std -- %
-
-% runLength
-[~, ~, possible_events_less] = RunLength(coh_theta_std < threshold1);
-
-% sometimes the first value doesn't meet threshold
-if coh_theta_std(possible_events_less(1)) <= threshold1
-    possible_events_less(1) = [];
+% loop across all possible events, then find times between them
+for i = 1:size(idx_startEnd,1)
+    timing_events{i} = timings(idx_start(i):idx_end(i));
 end
 
-% get start and end points of coherence thresholds
-startPosLess  = possible_events_less(1:2:length(possible_events_less));
-endPosLess    = possible_events_less(2:2:length(possible_events_less)); % note that the endPos is one element after it actually ends
+% I can either handle cases where the timing is unequal here, or during
+% acquisition
 
-% the duration of the event is going to be the end of the event - the start
-% of the event. Note that these are epochs, not time. So if you get
-% eventDur(1) = 2, it indicates that the threshold was met for 2
-% consecutive epochs. It does NOT indicate that the event was met for 2
-% seconds or any amount of time. THe amount of time is set by you, and can
-% be found in the timing variable in the workspace
-eventDurLess  = endPosLess-startPosLess;
+% heres the thing, if I'm doing .25 seconds, thats not many cycles to
+% consider for something like coherence, and is probably why my estimates
+% are so high. Now, if I bump it up to .5 sec samples, I geet
+
+% 
+possible_event_startTimes = timings(idx_start);
+possible_event_endTimes   = timings(idx_end); 
+
+% if the coherence event was only above threshold for one event, we can use
+% the event_startTimes, however, if it exceeded one event, we need to
+% consider its onset and offset time bc they could be sampled differently.
+find(eventDur > 1)
 
 % convert to time
-eventDurLess_time = eventDurLess*timing(1);
-
-
-
+eventDur_time = eventDur*timing(1);
 
 %% consider both event duration and std
 
@@ -148,4 +137,9 @@ xlabel('Coherence Event Duration (in seconds)')
 title(['Threshold of ',num2str(threshold1),' std.'])
 box off
 
-
+% plot the distribution of event durations in seconds
+histogram(eventDurLess_time,'FaceColor','m')
+%ylabel(['Observation # in intervals of ',num2str(timing(1)),' seconds'])
+xlabel('Coherence Event Duration (in seconds)')
+title(['Threshold of ',num2str(threshold1),' std.'])
+box off
