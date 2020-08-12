@@ -66,7 +66,7 @@ params.Fs     = srate;
 params.fpass  = [4 12];
 
 % define a looping time
-loop_time = 10; % minutes - note that this isn't perfect, but its a few seconds behind dependending on the length you set. The lag time changes incrementally because there is a 10-20ms processing time that adds up
+loop_time = 5; % minutes - note that this isn't perfect, but its a few seconds behind dependending on the length you set. The lag time changes incrementally because there is a 10-20ms processing time that adds up
 
 % define for loop
 looper = (loop_time*60)/amountOfData; % N minutes * 60sec/1min * (1 loop is about .250 ms of data)
@@ -106,8 +106,8 @@ for i = 1:looper
     % seconds sometimes, while wcoherence is around 0.05 sec.
     [coh,phase,~,~,~,freq] = coherencyc(dataArray(1,:),dataArray(2,:),params);
     
-    % amount of data in consideration
-    timings(i) = length(dataArray)/srate;
+    % time of data in consideration
+    % timings(i) = length(coh)/srate; % makes no sense
     
     % take averages
     coh_theta(i) = mean(coh);
