@@ -38,6 +38,7 @@ LFP2name = 'CSC9';
 try
     openStreamCheckStream(LFP1name,LFP2name);
 catch
+    pause(2) % adding this pause helps get data. Sometimes you'll get an error bc youre streaming too quickly without enough data
     openStreamCheckStream(LFP1name,LFP2name);
 end
 
