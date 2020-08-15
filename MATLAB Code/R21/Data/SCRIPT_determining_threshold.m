@@ -7,7 +7,7 @@
 clear; clc;
 
 % load in example data
-load('data_example1_20minRec')
+load('data_example1_10minRec_halfSecResolution')
 
 % start with a plot of the streaming time
 figure('color','w');

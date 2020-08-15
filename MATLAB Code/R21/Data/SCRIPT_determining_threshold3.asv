@@ -7,7 +7,7 @@
 clear; clc;
 
 % load in example data
-dataIn = load('data_example1_10minRec_halfSecResolution')
+load('data_example1_10minRec_halfSecResolution')
 
 % coh_theta: vector array of coherence estimates
 % threshold: a scalar value indicating the threshold set according to
@@ -18,10 +18,10 @@ dataIn = load('data_example1_10minRec_halfSecResolution')
 % timing: a scalar indicating the time of the data in consideration. To get
 %           this, divide the length of 
 
-coh_theta = dataIn.coh_theta;
+%coh_theta = dataIn.coh_theta;
 threshold = 1;
 threshold_indicator = 'greater than';
-timings = dataIn.timings;
+%timings = dataIn.timings;
 
 % get average coherence
 coh_theta_avg = mean(coh_theta);
@@ -37,7 +37,7 @@ elseif contains(threshold_indicator,'less than')
 end    
 
 % get coherence values
-coh_above_threshold = coh_theta(threshold_met);
+coh_threshold = coh_theta(threshold_met);
 
 % -- we should set a criteria for time above threshold1 -- %
 
@@ -74,34 +74,14 @@ for i = 1:length(idx_start)
     timing_events{i} = timings(idx_start(i):idx_end(i));
 end
 
-% I can either handle cases where the timing is unequal here, or during
-% acquisition
-
-% heres the thing, if I'm doing .25 seconds, thats not many cycles to
-% consider for something like coherence, and is probably why my estimates
-% are so high. Now, if I bump it up to .5 sec samples, and change the
-% resolution to 5-12hz, then I get 2.5-6 cycles per sample, thats a whole
-% lot better than 1.15-3 cycles per sample at .25 seconds. Additionally, i
-% could even do 1 second intervals, but half second should work fine. If i
-% only have 1 cycle, coherenc may not be able to truly detect 'coherency'.
-
-% 
-possible_event_startTimes = timings(idx_start);
-possible_event_endTimes   = timings(idx_end); 
-
-% if the coherence event was only above threshold for one event, we can use
-% the event_startTimes, however, if it exceeded one event, we need to
-% consider its onset and offset time bc they could be sampled differently.
-find(eventDur > 1)
-
-% convert to time
-eventDur_time = eventDur*timing(1);
+% add the events within each array
+timing_total = cellfun(@sum,timing_events);
 
 %% consider both event duration and std
 
 %% figures
 % plot distribution of coherence estimates
-figure()
+figure('color','w')
 subplot 211;
 hold on;
 h1 = histogram(coh_theta);
@@ -117,16 +97,14 @@ ylabel(['Observation # in intervals of ',num2str(timing(1)),' seconds'])
 title([num2str(loop_time),' minutes of coherence detection'])
 
 % plot the distribution
-h2 = histogram(coh_above_threshold,'FaceColor','green')
-h2.BinWidth = h1.BinWidth;
-
-% plot the distribution
-h4 = histogram(coh_below_threshold,'FaceColor','red')
-h4.BinWidth = h1.BinWidth;
-
-% plot the distribution
-h3 = histogram(coh_above_threshold,'FaceColor','m')
-h3.BinWidth = h1.BinWidth;
+if contains(threshold_indicator,'greater than')
+    h2 = histogram(coh_threshold,'FaceColor','green')
+    h2.BinWidth = h1.BinWidth;
+    
+elseif contains(threshold_indicator,'less than')
+    h2 = histogram(coh_threshold,'FaceColor','red')
+    h2.BinWidth = h1.BinWidth;
+end
 
 % --  make legend -- %
 legend('All coherence values',['Mean coherence of ',num2str(coh_theta_avg)],...
