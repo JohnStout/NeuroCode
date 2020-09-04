@@ -1,0 +1,322 @@
+---
+title: "Assignment 3"
+output: html_document
+---
+
+**John Stout**
+
+Note that two asterisks mark bold regions of text. 
+
+Use a series of R code chunks, below, to load in the A03_dataset.csv dataset and complete the analysis. 
+
+The data is in a csv file called A03_dataset.csv, available on the Files section of Canvas.
+
+This is a dataset from my lab that will exemplify a typical work flow for dealing with repeated measures data. That is, the inputs are quite raw (I've only minimally processed the output files of our paradigm software). Actually, this data is from an ongoing study and only part of that study. 
+
+Here I will describe the study, although you don't really need to know this detail. In this study, participants are completing trials of a "repetition discrimination task." The paper describing this method is available here: https://link.springer.com/content/pdf/10.3758/BF03194454.pdf -- Figure 7 is close to the full set of conditions that we're using, although we also have a proximity manipulation like Figure 2. On each trial subjects are shown a row of shapes that alternate circle-square-circle-square-etc. Once in that row, shapes repeat (i.e., there is a side-by-side circle pair or square pair). On grouped trials, some extraneous perceptual grouping factor is introduced. For example, "common region" cues are just rectangles that surround two shapes. A bunch of these rectangles are presented grouping the items into pairs. The critical manipulation is the placement of the repetition -- does it occur within a grouped pair, or across members of separate pairs (e.g, two squares belonging to two different, but adjacent groups). The pics in the paper linked above will do this more justice, and you may even find that you can experience the effect we are looking to measure -- it's harder to locate the repetition when it crosses a grouping boundary.
+
+Our main hypothesis involves relationships among the different grouping cue effects, but we will mainly treat this as if we're doing a RM-ANOVA.
+
+The columns in the data file are: 
+
+participant -- this is the unique identifier for each person
+
+blocks.thisN -- the number of the block of trials (ranges 0-4, there were 5 blocks)
+
+targPos -- where was the repetition (position of the pair in the sequence).
+
+groupCue -- this identifies the type of grouping cue that was present, if any. EC -- element connectedness. CR -- common region. PROX -- proximity. SIM -- color similarity. NEU -- no grouping cue.
+
+wbn -- whether the repetition was within (w) or between (b) groups. n is a placeholder for neutral trials.
+
+colorCond -- defines whether the items were white or black, except in case of SIM trials -- there it refers to whether the first item was white or black (items were a mix on those trials).
+
+targType -- circle or square repetition? 
+
+key_resp_11.corr -- was the participant's response correct? 0 for incorrect, 1 for correct.
+
+key_resp_11.rt -- what was their response time (in seconds) for this trial?
+
+0. Place the dataset file in the same directory as you saved this file. Set your working directory to that directory. Load the data in to a data frame called df_raw. 
+
+``` {r}
+# maybe try to find a way to manually define this when knitting
+# I manually saved the data to my folder - was easier this way than figuring out how to get it off canvas from R
+
+# set working directory
+setwd("C:/Users/uggriffin/Documents/R/R stats course/Assignments")
+
+# load data
+df_raw = read.csv("A03_dataset.csv")
+
+```
+
+1. Filtering data. 
+
+a. We're going to treat block 0 as practice, remove it from df_raw. 
+
+```{r}
+
+# eliminate block 0 from df_raw and check that the correct number of rows were removed  
+
+old_sz  = nrow(df_raw)                            # save old size of df_raw
+blk_sz  = length(which(df_raw$blocks.thisN == 0)) # save length of blocks.thisN == 0
+idx_rem = which(df_raw$blocks.thisN == 0)         # index to remove
+df_raw  = df_raw[-idx_rem, ]                      # delete rows where blocks.thisN == 0 
+new_sz  = nrow(df_raw)                            # save new size
+
+# check size - this checks out
+
+check1   = old_sz - new_sz == blk_sz              # check variable should be equal in size
+check1_1 = which(df_raw$blocks.thisN == 0)        # this should be empty
+
+```
+
+b. Calculate the accuracy (proportion correct) for each subject and each combination of groupCue and wbn using tidyverse functions like group_by(), summarise_at(), generating a new data frame called df_actable that stores this info.
+
+```{r}
+
+# key_resp_11.corr where 0 = incorrect and 1 = correct
+
+# calculate the accuracy for each subject, for groupCue combinations, and for wbn categories
+# use tidyverse functions
+
+library(tidyverse)
+library(dplyr)
+
+# I took this offline and found that mean of a binary variable is equal to me finding the length of 1s/ length of total variable
+
+df_actable = df_raw %>%
+  group_by(participant, groupCue, wbn) %>%
+  summarise(accuracy = mean(key_resp_11.corr))
+
+```
+
+c. Determine which subjects' accuracy in any cell fell below 80%. Print the number of unique subjects with this circumstance.
+
+``` {r}
+
+# find subjects that hit less than 80%
+
+subj_ind = df_actable$participant[which(df_actable$accuracy < .8)] # find all subjects
+sub_tb   = table(subj_ind);                                 
+sub_rem  = as.numeric(names(sub_tb))                          # unique examples in subject_idx
+
+# print unique instances 
+
+print(sub_rem)
+
+```
+d. Remove the subjects identified in (b) from df_raw.
+
+``` {r}
+
+# remove subjects that hit less than 80% from df_raw
+
+for (i in sub_rem) {
+  idx_rem = which(df_raw$participant == i) # loop over subjects and find people of interest
+  df_raw  = df_raw[-idx_rem, ]             # remove them iteratively
+  }
+
+# check to make sure the subjects no longer exist
+
+check2 = which(df_raw$participant == sub_rem[2]) 
+
+```
+
+e. We don't like RTs below .15 or above 6 s. Remove all such trials from df_raw.
+
+```{r}
+
+# find RTs below 0.15 or above 6s and remove the trials
+
+idx_rem = which(df_raw$key_resp_11.rt < 0.15 | df_raw$key_resp_11.rt > 6) # index to remove
+df_raw  = df_raw[-idx_rem, ]                                              # delete rows
+
+# check work
+
+check3  = which(df_raw$key_resp_11.rt < 0.15 | df_raw$key_resp_11.rt > 6) # should be empty int
+
+```
+
+f. We don't like subject/condition-specific RTs that are less or greater than 2 standard deviations from the mean. For each subject and combination of wbn / groupCue, calculate a z-score for each RT based on the cell it belongs to and store it in a new column called zRT. Hint: You can use group_by(), summarise_at(), and scale() to do this in one line. 
+
+``` {r}
+
+# The instructions above have me a little confused, but since in (1g) it says to remove all trials that are outside of 2 stds, I think I need to z-score across trials within subject in the df_raw variable.
+  
+df_raw = df_raw %>% 
+  group_by(participant) %>% 
+  mutate(zRT = scale(key_resp_11.rt))
+
+# took this offline to check
+# write.csv(df_raw,"df_zRT.csv")
+
+```
+
+g. Remove all trials in which the z-score calculated in (f) is less than -3 or greater than 3.
+
+``` {r}
+
+# remove trials with z < -3 or z > 3
+
+idx_rem = which(df_raw$zRT < -3 | df_raw$zRT > 3) # index to remove - visually confirmed
+df_raw  = df_raw[-idx_rem, ] 
+
+# check work
+check4 = which(df_raw$zRT < -3 | df_raw$zRT > 3) # index to remove - visually confirmed
+
+```
+
+h. Remove neutral trials (groupCue == NEU).
+
+``` {r}
+
+# remove neutral trials
+
+idx_rem = which(df_raw$groupCue == "NEU") # index to remove - visually confirmed
+df_raw  = df_raw[-idx_rem, ] 
+
+# check work
+
+check5 = which(df_raw$groupCue == "NEU")
+
+```
+
+2. Summarizing data. 
+
+a. Use dplyr /tidyr to generate a new data frame from df_raw, called df_RTs. This table should contain the mean RT for each subject within each combination of groupCue and wbn. Since there are 4 grouping cues left after removing neutral, and 2 levels of wbn (w or b) left over, there should be eight rows per participant.
+
+```{r}
+
+# make data frame df_RTs with mean RTs - visually confirmed 8 rows per participant
+
+df_RTs = df_raw %>%
+  group_by(participant, groupCue, wbn) %>%
+  summarise(meanRT = mean(key_resp_11.rt))
+
+```
+
+b. Summarize this further -- average the mean RTs and plot these new group-level means in a bar graph, split into 8 conditions defined by combinations of groupCue and wbn conditions. The bars should be clustered by grouping cue. I.e., the x-axis corresponding to the grouping cues, with the within and between conditions for that cue plotted side by side. Plot error bars defined by standard error.
+
+```{r}
+
+# x-axis = grouping cues where the within and between conditions are side by side
+# based on this, I should average across participants
+
+# take the mean and sem of all conditions and save for bar graph
+
+bar_df = df_RTs %>% 
+  group_by(groupCue, wbn) %>% 
+  summarise_at(c("meanRT"),funs(mean,sem=sd(.)/sqrt(n())))
+
+bar_df = mutate(bar_df, both_cond = paste(groupCue, wbn)) # combine columns for plotting
+
+# plot with ggplot
+
+ggplot(bar_df, aes(y = mean, x = both_cond, fill = both_cond))+
+  geom_bar(stat="identity", color="black", position=position_dodge()) +
+  geom_errorbar(aes(ymin = mean-sem, ymax = mean+sem), width=.2, position=position_dodge(.9)) +
+  theme_classic() + theme(legend.position = "none") +
+  ylab("Mean Reaction Time")
+  xlab("Condition Combinations")
+  
+```
+
+3. RM-ANOVA. Use ezANOVA to run a repeated-measures ANOVA on the data in df_RTs, with 2 within-subjects factors: wbn and groupCue. You don't have to write up the results but make sure the ezANOVA output table displays. Ask ezANOVA to give detailed output that includes SS terms. 
+
+```{r}
+
+library(ez) # load library
+df_RTs$participant = as.factor(df_RTs$participant) # convert to factor
+
+# reformat
+library(dplyr)
+df_RTs = df_RTs %>% arrange(groupCue,wbn)
+
+# run anova using ezANOVA
+
+dfRT_anova = ezANOVA(
+    data       = df_RTs
+    , dv       = meanRT                 # dv
+    , wid      = participant            # subjects
+    , within   = .(groupCue,wbn)        # within subjects factors
+    , detailed = TRUE
+    , type     = 3 
+)
+
+# print out detailed output that includes SS data
+
+print(dfRT_anova)
+
+# for checking
+
+#setwd("C:/Users/uggriffin/Documents/R/R stats course/Assignments")
+#write.csv(df_RTs,"df_RTs.csv")
+
+```
+
+4. The RM-ANOVA in this case is kind of beside the point -- because we have a priori hypotheses, we wouldn't start with this analysis. That said, if you saw the outcome of an ANOVA that looked like what you see in (3), what would your next step be? Answer below in bold text. Though we haven't done a 2-factor RM-ANOVA in class the idea is the same as with between-groups ANOVA. However, there is one wrinkle -- you are not recommended to pool variance in follow-up tests for repeated measures, as it can inflate type I error rates in some cases. So, you would just follow up with independent tests -- I'm just asking what would make sense in this case, not for you to actually perform these.
+
+**I don't think I fully understood the hypothesis that you mentioned earlier. However, based on the way that the graph is put together, it seems the interest is on how specific ways of grouping the 'within' and 'between' manipulations effect mean reaction times. If this is the case, the simplest approach in my mind would be to run independent paired t-tests between the grouped conditions (i.e. SIM-b VS SIM-w) and correcting for the p-value accordingly. This approach feels approriate for a few reasons: 1) this data is paired, each subject received the same manipulations and our interest is the effect of combinations of independent variables on the mean reaction times 2) paired t-tests across all combinations seem over-kill and could inflate the type 2 error after corrected for all tests and 3) we don't have to make any assumptions regarding variance with the paired t-test.** 
+
+**If read the hypothesis wrong, and you're interested in how the grouping manipulation itself affected within or between, we'd have to run a lot of paired t-tests.**
+
+5. In the ANOVA above, what key thing would change if this had been a betweeen-subjects study? That is, if you ran ezANOVA with these factors as between-subjects, what would be the key reason you would likely obtain lower F values? 
+
+**The key reason for the repeated measures F statistic to have higher values is that the between subject variability is ignored from the denominator of the F statistic.**
+
+EXTRA CREDIT: Our real hypothesis is that there will be systematic variation amongst the four grouping types. We expect, specifically, that the CR cue and the EC cue will produce similar effects within individuals. Calculate correlations between the grouping effect (between minus within RT) for each factor and each other factor. This will involve a total of 4 correlations. Do you see a pattern?
+
+**I don't think that I answered the question correctly. But the only combination of correlations that I could see adding up to total of 4 correlations was if I correlated the wbn variables within each factor. It seems that mean reaction times are highly correlated within individuals despite what they experience.**
+
+```{r}
+
+# correlation between the 'between' and 'within' RT's for each factor
+# this is length - sorry
+
+# for CR
+idx_temp    = which((df_RTs$groupCue == "CR" & df_RTs$wbn == "b") | 
+               (df_RTs$groupCue == "CR" & df_RTs$wbn == "w"))     # extract CR
+df_CR       = df_RTs[idx_temp, ]     # isolate CR
+size_req    = length(df_CR$meanRT)/2 # number of observations for each variable
+corr_CR     = cor.test(df_CR$meanRT[1:size_req],df_CR$meanRT[(size_req+1):(size_req*2)])
+corr_CR_est = corr_CR[["estimate"]]
+corr_CR_p   = corr_CR[["p.value"]]
+
+# for EC
+idx_temp    = which((df_RTs$groupCue == "EC" & df_RTs$wbn == "b") | 
+               (df_RTs$groupCue == "EC" & df_RTs$wbn == "w"))     # extract CR
+df_EC       = df_RTs[idx_temp, ]     # isolate CR
+size_req    = length(df_EC$meanRT)/2 # number of observations for each variable
+corr_EC     = cor.test(df_EC$meanRT[1:size_req],df_EC$meanRT[(size_req+1):(size_req*2)])
+corr_EC_est = corr_EC[["estimate"]]
+corr_EC_p   = corr_EC[["p.value"]]
+
+# for PROX
+idx_temp      = which((df_RTs$groupCue == "PROX" & df_RTs$wbn == "b") | 
+               (df_RTs$groupCue == "PROX" & df_RTs$wbn == "w"))     # extract CR
+df_PROX       = df_RTs[idx_temp, ]     # isolate CR
+size_req      = length(df_PROX$meanRT)/2 # number of observations for each variable
+corr_PROX     = cor.test(df_PROX$meanRT[1:size_req],df_PROX$meanRT[(size_req+1):(size_req*2)])
+corr_PROX_est = corr_PROX[["estimate"]]
+corr_PROX_p   = corr_PROX[["p.value"]]
+
+# for SIM
+idx_temp     = which((df_RTs$groupCue == "SIM" & df_RTs$wbn == "b") | 
+               (df_RTs$groupCue == "SIM" & df_RTs$wbn == "w"))     # extract CR
+df_SIM       = df_RTs[idx_temp, ]     # isolate CR
+size_req     = length(df_SIM$meanRT)/2 # number of observations for each variable
+corr_SIM     = cor.test(df_SIM$meanRT[1:size_req],df_SIM$meanRT[(size_req+1):(size_req*2)])
+corr_SIM_est = corr_SIM[["estimate"]]
+corr_SIM_p   = corr_SIM[["p.value"]]
+
+# I only plotted one since all were positively correlated and significant
+plot_data = data.frame("y" = df_SIM$meanRT[1:size_req], "x" = df_SIM$meanRT[(size_req+1):(size_req*2)])
+
+ggplot(plot_data, aes(y = y, x = x)) + geom_point() +
+  xlab("Mean RTs during SIM-w") +
+  ylab("Mean RTs during SIM-b") + 
+  theme_classic()
+
+```
