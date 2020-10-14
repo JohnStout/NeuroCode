@@ -7,7 +7,8 @@
 clear; clc;
 
 % load in example data
-load('data_example1_10minRec_halfSecResolution')
+%load('data_example1_10minRec_halfSecResolution')
+load('data_example1_20minRec')
 
 % coh_theta: vector array of coherence estimates
 % threshold: a scalar value indicating the threshold set according to
