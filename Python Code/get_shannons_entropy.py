@@ -13,6 +13,8 @@ https://www.kite.com/python/answers/how-to-calculate-shannon-entropy-in-python
 @author: JS
 """
 
+# this needs to made into a function that can be called into matlab
+
 import pandas as pd
 import scipy.stats as stat
 import scipy.io as sio
