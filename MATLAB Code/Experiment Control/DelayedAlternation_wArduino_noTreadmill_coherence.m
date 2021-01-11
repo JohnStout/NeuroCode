@@ -4,6 +4,15 @@
 %
 % written by John Stout
 
+
+%% some parameters set by the user
+delay_length = 5; % seconds
+numTrials    = 6;
+pellet_count = 1;
+timeout_len  = 60*5;
+
+%% preparation
+
 % load directory specific path
 load('main_directory')
 split_out = split(main_directory,'\');
@@ -26,9 +35,6 @@ doorFuns = DoorActions;
 % test reward wells
 rewFuns = RewardActions;
 
-% load treadmill functions and settings
-[treadFuns,treadSpeeds] = TreadMillFuns;
-
 % get IR information
 irBreakNames = irBreakLabels;
 
@@ -46,12 +52,6 @@ for i = 1:10000000
 end
 %}
 
-%% some parameters set by the user
-set_speed    = treadSpeeds.ten; % seven meters per minute
-delay_length = 5; % seconds
-numTrials    = 6;
-pellet_count = 1;
-timeout_len  = 60*5;
 
 %% clean the stored data just in case IR beams were broken
 s.Timeout = 1; % 1 second timeout
@@ -281,24 +281,10 @@ for triali = 1:numTrials
     
     % only during delayed alternations will you start the treadmill
     if delay_length > 1
-
-        % start treadmill
-        pause(0.25)
-        write(s,treadFuns.start,'uint8');
-
-        % short pause before sending the machine the speed data
-        pause(0.25)
-
-        % set treadmill speed
-        write(s,uint8(set_speed'),'uint8');
-        write(s,uint8(set_speed'),'uint8'); % add a second command in case the machine missed the first one
-
+   
         % delay
         pause(delay_length);
 
-        % stop treadmill
-        pause(0.25)                
-        write(s,treadFuns.stop,'uint8');
     end                         
 end
 
