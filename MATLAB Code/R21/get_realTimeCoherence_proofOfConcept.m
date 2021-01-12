@@ -18,7 +18,7 @@ params.Fs     = srate;
 params.fpass  = [4 12];
 
 % define a looping time
-loop_time = .5; % minutes - note that this isn't perfect, but its a few seconds behind dependending on the length you set. The lag time changes incrementally because there is a 10-20ms processing time that adds up
+loop_time = 1; % minutes - note that this isn't perfect, but its a few seconds behind dependending on the length you set. The lag time changes incrementally because there is a 10-20ms processing time that adds up
 
 % define amount of data to collect
 amountOfData = .25; % seconds
@@ -29,17 +29,15 @@ numSamples2use = amountOfData*srate;
 % define for loop
 looper = (loop_time*60)/amountOfData; % N minutes * 60sec/1min * (1 loop is about .250 ms of data)
 
-%% initial
-% start with this variable set to zero, it tells the code whether to clear
-% the stream
-clearIt = 0;
-
 %% now add/remove time and calculate coherence
     
+% get the data change as an output (ie sampling issue) can account for this
+% later or in the online detet
+
 % for loop start
 coh_temp = [];
 coh = [];
-for i = 1:looper
+for i = 1:1000
     
     tic;
     if i == 1
@@ -58,6 +56,7 @@ for i = 1:looper
         coh_temp = [];
         coh_temp = coherencyc(dataArray(1,:),dataArray(2,:),params);
         coh(i)   = nanmean(coh_temp);
+        
     else
         
     end
@@ -82,7 +81,8 @@ for i = 1:looper
     end
     %}
     
-    % running this a ton of times until we get failures           
+    % running this a ton of times until we get failures          
+    pause(.25);
     [~, dataArray_new, timeStampArray, ~, ~, ...
     numValidSamplesArray, numRecordsReturned, numRecordsDropped , funDur.getData ] = NlxGetNewCSCData_2signals(LFP1name, LFP2name);  
 
@@ -110,9 +110,32 @@ for i = 1:looper
     outtoc(i) = toc;
     
     disp(['loop # ',num2str(i),'/',num2str(looper)])
-       
-end 
 
+    % store timestamp array to check later
+    timeStamps{i} = timeStampArray;
+end
+
+% check timestamps
+for i = 1:length(timeStamps)
+    
+    if size(timeStamps{i},2) == 1
+        disp(['0.25 sec ',num2str(i)])
+        check = timeStamps{i}(1) ==  timeStamps{i}(2);
+        if check == 0
+            disp(['Error on event ',num2str(i)])
+        end
+    elseif size(timeStamps{i},2) == 2
+        disp('Double time! = .5 sec')
+        check1 = timeStamps{i}(1,1) == timeStamps{i}(2,1);
+        check2 = timeStamps{i}(1,2) == timeStamps{i}(2,2);
+        if check1 == 0 | check2 == 0
+            disp(['Error on event ',num2str(i)])
+        end
+    else
+        disp('> double time (> .5 sec)?')
+    end
+    
+end
 figure(); stem(coh)
 
 % remove the very first 2 events, they will be excluded anyway. They take
