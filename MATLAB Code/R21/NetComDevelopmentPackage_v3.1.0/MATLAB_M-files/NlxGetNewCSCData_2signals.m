@@ -45,154 +45,213 @@ function [succeeded, dataArray, timeStampArray, channelNumberArray, samplingFreq
 	numRecordsReturnedPtr = libpointer('int32Ptr', numRecordsReturned);
 	numRecordsDroppedPtr = libpointer('int32Ptr', numRecordsDropped);
 	
-    % get data
+    % get data from two signals to improve the lag between extraction
     [succeeded_signal1, objectName_signal1, timeStampArray_signal1, channelNumberArray_signal1, samplingFreqArray_signal1, numValidSamplesArray_signal1, dataArray_signal1, numRecordsReturned_signal1, numRecordsDropped_signal1 ] = calllib('MatlabNetComClient', 'GetNewCSCData', objectName1, timeStampArrayPtr, channelNumberArrayPtr, samplingFreqArrayPtr, numValidSamplesArrayPtr, dataArrayPtr, numRecordsReturnedPtr,numRecordsDroppedPtr );
     [succeeded_signal2, objectName_signal2, timeStampArray_signal2, channelNumberArray_signal2, samplingFreqArray_signal2, numValidSamplesArray_signal2, dataArray_signal2, numRecordsReturned_signal2, numRecordsDropped_signal2 ] = calllib('MatlabNetComClient', 'GetNewCSCData', objectName2, timeStampArrayPtr, channelNumberArrayPtr, samplingFreqArrayPtr, numValidSamplesArrayPtr, dataArrayPtr, numRecordsReturnedPtr,numRecordsDroppedPtr );
 
     % account for instances where data is not the same size
-    if (numRecordsReturned_signal2 ~= numRecordsReturned_signal1) && (numRecordsReturned_signal2 > numRecordsReturned_signal1) && (timeStampArray_signal1(1) == timeStampArray_signal2(1))
-        disp('Error in sampling signal 1')
-
-         %format the return arrays using signal 1
+    
+    % -- SIGNAL 1 ISSUE -- %
+    
+    % signal 1's first record matches signal 2's first record, but not
+    % signal 2's second record
+    if (numRecordsReturned_signal2 ~= numRecordsReturned_signal1) && (numRecordsReturned_signal2 > numRecordsReturned_signal1) && (timeStampArray_signal1(1) == timeStampArray_signal2(1)) && (timeStampArray_signal1(1) ~= timeStampArray_signal2(2))
+        disp('Signal 1 record 1 matches signal 2 record 1')
+        %error('test me')
+        
+         % signal 1
         if numRecordsReturned_signal1 > 0
             %truncate arrays to the number of returned records
-            dataArray_signal1 = dataArray_signal1(1:(numRecordsReturned_signal1 * maxCSCSamples) );
-            timeStampArray_signal1 = timeStampArray_signal1(1:numRecordsReturned_signal1);
-            channelNumberArray_signal1 = channelNumberArray_signal1(1:numRecordsReturned_signal1);
-            samplingFreqArray_signal1 = samplingFreqArray_signal1(1:numRecordsReturned_signal1);
-            numValidSamplesArray_signal1 = numValidSamplesArray_signal1(1:numRecordsReturned_signal1);
+            dataArray_signal1             = dataArray_signal1(1:(numRecordsReturned_signal1 * maxCSCSamples) );
+            timeStampArray_signal1        = timeStampArray_signal1(1:numRecordsReturned_signal1);
+            channelNumberArray_signal1    = channelNumberArray_signal1(1:numRecordsReturned_signal1);
+            samplingFreqArray_signal1     = samplingFreqArray_signal1(1:numRecordsReturned_signal1);
+            numValidSamplesArray_signal1  = numValidSamplesArray_signal1(1:numRecordsReturned_signal1);
         elseif numRecordsReturned_signal1 == 0
             %return empty arrays if no data was retrieved
-            dataArray_signal1 = [];
-            timeStampArray_signal1 = [];
-            channelNumberArray_signal1 = [];
-            samplingFreqArray_signal1 = [];
+            dataArray_signal1            = [];
+            timeStampArray_signal1       = [];
+            channelNumberArray_signal1   = [];
+            samplingFreqArray_signal1    = [];
             numValidSamplesArray_signal1 = [];
         end
 
+        % remove the second record in signal 2
         if numRecordsReturned_signal2 > 0
             %truncate arrays to the number of returned records
-            dataArray_signal2 = dataArray_signal2(1:(numRecordsReturned_signal1 * maxCSCSamples) );
-            timeStampArray_signal2 = timeStampArray_signal2(1:numRecordsReturned_signal1);
-            channelNumberArray_signal2 = channelNumberArray_signal2(1:numRecordsReturned_signal1);
-            samplingFreqArray_signal2 = samplingFreqArray_signal2(1:numRecordsReturned_signal1);
-            numValidSamplesArray_signal2 = numValidSamplesArray_signal2(1:numRecordsReturned_signal1);
+            dataArray_signal2             = dataArray_signal2(1:(numRecordsReturned_signal1 * maxCSCSamples) );
+            timeStampArray_signal2        = timeStampArray_signal2(1:numRecordsReturned_signal1);
+            channelNumberArray_signal2    = channelNumberArray_signal2(1:numRecordsReturned_signal1);
+            samplingFreqArray_signal2     = samplingFreqArray_signal2(1:numRecordsReturned_signal1);
+            numValidSamplesArray_signal2  = numValidSamplesArray_signal2(1:numRecordsReturned_signal1);
         elseif numRecordsReturned_signal2 == 0
             %return empty arrays if no data was retrieved
-            dataArray_signal2 = [];
-            timeStampArray_signal2 = [];
-            channelNumberArray_signal2 = [];
-            samplingFreqArray_signal2 = [];
+            dataArray_signal2            = [];
+            timeStampArray_signal2       = [];
+            channelNumberArray_signal2   = [];
+            samplingFreqArray_signal2    = [];
             numValidSamplesArray_signal2 = [];
         end       
 
-        
-    % in the case where the first sampled array has more data than the
-    % second
-    elseif (numRecordsReturned_signal2 ~= numRecordsReturned_signal1) && (numRecordsReturned_signal2 < numRecordsReturned_signal1) && (timeStampArray_signal1(2) == timeStampArray_signal2(1))
-        disp('Error in sampling signal 2')
-        
-        %format the return arrays
+    % signal 1's first record matches signal 2's second record, but signal 1's first record
+    % does not match signal 2's first record
+    elseif (numRecordsReturned_signal2 ~= numRecordsReturned_signal1) && (numRecordsReturned_signal2 > numRecordsReturned_signal1) && (timeStampArray_signal1(1) == timeStampArray_signal2(2)) && (timeStampArray_signal1(1) ~= timeStampArray_signal2(1))
+        disp('Signal1 record 1 matches signal 2 record 2')
+        %error('test me')
+
+         % signal 1 - do nothing
         if numRecordsReturned_signal1 > 0
             %truncate arrays to the number of returned records
-            dataArray_signal1 = dataArray_signal1((numRecordsReturned_signal2 * maxCSCSamples)+1:(numRecordsReturned_signal2 * maxCSCSamples)*numRecordsReturned_signal1 );
-            timeStampArray_signal1 = timeStampArray_signal1(1:numRecordsReturned_signal1);
-            channelNumberArray_signal1 = channelNumberArray_signal1(1:numRecordsReturned_signal1);
-            samplingFreqArray_signal1 = samplingFreqArray_signal1(1:numRecordsReturned_signal1);
-            numValidSamplesArray_signal1 = numValidSamplesArray_signal1(1:numRecordsReturned_signal1);
+            dataArray_signal1             = dataArray_signal1(1:(numRecordsReturned_signal1 * maxCSCSamples) );
+            timeStampArray_signal1        = timeStampArray_signal1(1:numRecordsReturned_signal1);
+            channelNumberArray_signal1    = channelNumberArray_signal1(1:numRecordsReturned_signal1);
+            samplingFreqArray_signal1     = samplingFreqArray_signal1(1:numRecordsReturned_signal1);
+            numValidSamplesArray_signal1  = numValidSamplesArray_signal1(1:numRecordsReturned_signal1);
         elseif numRecordsReturned_signal1 == 0
             %return empty arrays if no data was retrieved
-            dataArray_signal1 = [];
-            timeStampArray_signal1 = [];
-            channelNumberArray_signal1 = [];
-            samplingFreqArray_signal1 = [];
+            dataArray_signal1            = [];
+            timeStampArray_signal1       = [];
+            channelNumberArray_signal1   = [];
+            samplingFreqArray_signal1    = [];
             numValidSamplesArray_signal1 = [];
         end
 
+        % remove the first record in signal 2
         if numRecordsReturned_signal2 > 0
             %truncate arrays to the number of returned records
-            dataArray_signal2 = dataArray_signal2(1:(numRecordsReturned_signal2 * maxCSCSamples) );
-            timeStampArray_signal2 = timeStampArray_signal2(1:numRecordsReturned_signal2);
-            channelNumberArray_signal2 = channelNumberArray_signal2(1:numRecordsReturned_signal2);
-            samplingFreqArray_signal2 = samplingFreqArray_signal2(1:numRecordsReturned_signal2);
-            numValidSamplesArray_signal2 = numValidSamplesArray_signal2(1:numRecordsReturned_signal2);
+            % 512+1:1024
+            dataArray_signal2            = dataArray_signal2((numRecordsReturned_signal1 * maxCSCSamples)+1:(numRecordsReturned_signal2 * maxCSCSamples) );
+            timeStampArray_signal2       = timeStampArray_signal2(numRecordsReturned_signal1+1:numRecordsReturned_signal2);
+            channelNumberArray_signal2   = channelNumberArray_signal2(numRecordsReturned_signal1+1:numRecordsReturned_signal2);
+            samplingFreqArray_signal2    = samplingFreqArray_signal2(numRecordsReturned_signal1+1:numRecordsReturned_signal2);
+            numValidSamplesArray_signal2 = numValidSamplesArray_signal2(numRecordsReturned_signal1+1:numRecordsReturned_signal2);
         elseif numRecordsReturned_signal2 == 0
             %return empty arrays if no data was retrieved
-            dataArray_signal2 = [];
-            timeStampArray_signal2 = [];
-            channelNumberArray_signal2 = [];
-            samplingFreqArray_signal2 = [];
+            dataArray_signal2            = [];
+            timeStampArray_signal2       = [];
+            channelNumberArray_signal2   = [];
+            samplingFreqArray_signal2    = [];
+            numValidSamplesArray_signal2 = [];
+        end
+        
+    % -- SIGNAL 2 ISSUE -- %
+    
+    % signal 2's first record matches signal 1's second record, but signal
+    % 2's first record does not match signal 1's first record
+    elseif (numRecordsReturned_signal2 ~= numRecordsReturned_signal1) && (numRecordsReturned_signal2 < numRecordsReturned_signal1) && (timeStampArray_signal1(2) == timeStampArray_signal2(1))  && (timeStampArray_signal1(1) ~= timeStampArray_signal2(1))
+        disp('Signal1 record 2 matches signal 2 record 1')
+        %error('test me')
+        
+        % Remove signal 1s first set of samples
+        if numRecordsReturned_signal1 > 0
+            %truncate arrays to the number of returned records
+            dataArray_signal1             = dataArray_signal1((numRecordsReturned_signal2 * maxCSCSamples)+1:(numRecordsReturned_signal2 * maxCSCSamples)*numRecordsReturned_signal1 );
+            timeStampArray_signal1        = timeStampArray_signal1(numRecordsReturned_signal2+1:numRecordsReturned_signal1);
+            channelNumberArray_signal1    = channelNumberArray_signal1(numRecordsReturned_signal2+1:numRecordsReturned_signal1);
+            samplingFreqArray_signal1     = samplingFreqArray_signal1(numRecordsReturned_signal2+1:numRecordsReturned_signal1);
+            numValidSamplesArray_signal1  = numValidSamplesArray_signal1(numRecordsReturned_signal2+1:numRecordsReturned_signal1);
+        elseif numRecordsReturned_signal1 == 0
+            %return empty arrays if no data was retrieved
+            dataArray_signal1            = [];
+            timeStampArray_signal1       = [];
+            channelNumberArray_signal1   = [];
+            samplingFreqArray_signal1    = [];
+            numValidSamplesArray_signal1 = [];
+        end
+
+        % do nothing
+        if numRecordsReturned_signal2 > 0
+            %truncate arrays to the number of returned records
+            dataArray_signal2             = dataArray_signal2(1:(numRecordsReturned_signal2 * maxCSCSamples) );
+            timeStampArray_signal2        = timeStampArray_signal2(1:numRecordsReturned_signal2);
+            channelNumberArray_signal2    = channelNumberArray_signal2(1:numRecordsReturned_signal2);
+            samplingFreqArray_signal2     = samplingFreqArray_signal2(1:numRecordsReturned_signal2);
+            numValidSamplesArray_signal2  = numValidSamplesArray_signal2(1:numRecordsReturned_signal2);
+        elseif numRecordsReturned_signal2 == 0
+            %return empty arrays if no data was retrieved
+            dataArray_signal2            = [];
+            timeStampArray_signal2       = [];
+            channelNumberArray_signal2   = [];
+            samplingFreqArray_signal2    = [];
             numValidSamplesArray_signal2 = [];
         end        
-      
+       
+    % signal 2 record 1 matches signal 1 record 1 but not signal 1 record 2
+    elseif (numRecordsReturned_signal2 ~= numRecordsReturned_signal1) && (numRecordsReturned_signal2 < numRecordsReturned_signal1) && (timeStampArray_signal1(1) == timeStampArray_signal2(1)) && (timeStampArray_signal1(2) ~= timeStampArray_signal2(1))
+        disp('Signal 2 record 1 matches signal 1 record 1')
+        %error('test me')
+       
+        % only include signal 1 record 1
+        if numRecordsReturned_signal1 > 0
+            %truncate arrays to the number of returned records
+            dataArray_signal1             = dataArray_signal1(1:(numRecordsReturned_signal2 * maxCSCSamples) );
+            timeStampArray_signal1        = timeStampArray_signal1(1:numRecordsReturned_signal2);
+            channelNumberArray_signal1    = channelNumberArray_signal1(1:numRecordsReturned_signal2);
+            samplingFreqArray_signal1     = samplingFreqArray_signal1(1:numRecordsReturned_signal2);
+            numValidSamplesArray_signal1  = numValidSamplesArray_signal1(1:numRecordsReturned_signal2);
+        elseif numRecordsReturned_signal1 == 0
+            %return empty arrays if no data was retrieved
+            dataArray_signal1            = [];
+            timeStampArray_signal1       = [];
+            channelNumberArray_signal1   = [];
+            samplingFreqArray_signal1    = [];
+            numValidSamplesArray_signal1 = [];
+        end
 
+        % do nothing
+        if numRecordsReturned_signal2 > 0
+            %truncate arrays to the number of returned records
+            dataArray_signal2             = dataArray_signal2(1:(numRecordsReturned_signal2 * maxCSCSamples) );
+            timeStampArray_signal2        = timeStampArray_signal2(1:numRecordsReturned_signal2);
+            channelNumberArray_signal2    = channelNumberArray_signal2(1:numRecordsReturned_signal2);
+            samplingFreqArray_signal2     = samplingFreqArray_signal2(1:numRecordsReturned_signal2);
+            numValidSamplesArray_signal2  = numValidSamplesArray_signal2(1:numRecordsReturned_signal2);
+        elseif numRecordsReturned_signal2 == 0
+            %return empty arrays if no data was retrieved
+            dataArray_signal2            = [];
+            timeStampArray_signal2       = [];
+            channelNumberArray_signal2   = [];
+            samplingFreqArray_signal2    = [];
+            numValidSamplesArray_signal2 = [];
+        end
+       
+    % everything is formatted correctly    
     else
-    
+        disp('Everything is good')
+        
         %format the return arrays
         if numRecordsReturned_signal1 > 0
             %truncate arrays to the number of returned records
-            dataArray_signal1 = dataArray_signal1(1:(numRecordsReturned_signal1 * maxCSCSamples) );
-            timeStampArray_signal1 = timeStampArray_signal1(1:numRecordsReturned_signal1);
-            channelNumberArray_signal1 = channelNumberArray_signal1(1:numRecordsReturned_signal1);
-            samplingFreqArray_signal1 = samplingFreqArray_signal1(1:numRecordsReturned_signal1);
-            numValidSamplesArray_signal1 = numValidSamplesArray_signal1(1:numRecordsReturned_signal1);
+            dataArray_signal1             = dataArray_signal1(1:(numRecordsReturned_signal1 * maxCSCSamples) );
+            timeStampArray_signal1        = timeStampArray_signal1(1:numRecordsReturned_signal1);
+            channelNumberArray_signal1    = channelNumberArray_signal1(1:numRecordsReturned_signal1);
+            samplingFreqArray_signal1     = samplingFreqArray_signal1(1:numRecordsReturned_signal1);
+            numValidSamplesArray_signal1  = numValidSamplesArray_signal1(1:numRecordsReturned_signal1);
         elseif numRecordsReturned_signal1 == 0
             %return empty arrays if no data was retrieved
-            dataArray_signal1 = [];
-            timeStampArray_signal1 = [];
-            channelNumberArray_signal1 = [];
-            samplingFreqArray_signal1 = [];
+            dataArray_signal1            = [];
+            timeStampArray_signal1       = [];
+            channelNumberArray_signal1   = [];
+            samplingFreqArray_signal1    = [];
             numValidSamplesArray_signal1 = [];
         end
 
         if numRecordsReturned_signal2 > 0
             %truncate arrays to the number of returned records
-            dataArray_signal2 = dataArray_signal2(1:(numRecordsReturned_signal2 * maxCSCSamples) );
-            timeStampArray_signal2 = timeStampArray_signal2(1:numRecordsReturned_signal2);
-            channelNumberArray_signal2 = channelNumberArray_signal2(1:numRecordsReturned_signal2);
-            samplingFreqArray_signal2 = samplingFreqArray_signal2(1:numRecordsReturned_signal2);
-            numValidSamplesArray_signal2 = numValidSamplesArray_signal2(1:numRecordsReturned_signal2);
+            dataArray_signal2             = dataArray_signal2(1:(numRecordsReturned_signal2 * maxCSCSamples) );
+            timeStampArray_signal2        = timeStampArray_signal2(1:numRecordsReturned_signal2);
+            channelNumberArray_signal2    = channelNumberArray_signal2(1:numRecordsReturned_signal2);
+            samplingFreqArray_signal2     = samplingFreqArray_signal2(1:numRecordsReturned_signal2);
+            numValidSamplesArray_signal2  = numValidSamplesArray_signal2(1:numRecordsReturned_signal2);
         elseif numRecordsReturned_signal2 == 0
             %return empty arrays if no data was retrieved
-            dataArray_signal2 = [];
-            timeStampArray_signal2 = [];
-            channelNumberArray_signal2 = [];
-            samplingFreqArray_signal2 = [];
+            dataArray_signal2            = [];
+            timeStampArray_signal2       = [];
+            channelNumberArray_signal2   = [];
+            samplingFreqArray_signal2    = [];
             numValidSamplesArray_signal2 = [];
         end
     end 
- %{   
-        
-    % sometimes, the sample sizes will differ, we must account for this.   
-    if timeStampArray_signal1 ~= timeStampArray_signal2
-        
-        % create an index that reflects the mismatch (idx will have a 1)
-        idx = timeStampArray_signal1 ~= timeStampArray_signal2;
-        
-        % find instances where idx equals 1
-        idxRem = find(idx == 1);
-        
-        if numel(timeStampArray_signal1) < numel(timeStampArray_signal2)
-            
-            % remove the timestamps
-            timeStampArray_signal2(idxRem)=[];
-            
-            % remove the necessary signal
-            dataArray_signal2(numValidSamplesArray_signal2(1)+1:numel(dataArray_signal2))=[];
-        
-    end
-    
-    if numel(timeStampArray_signal1) <  numel(timeStampArray_signal2)
-         
-        % find the timestamp match
-        idx = dsearchn(timeStampArray_signal2',timeStampArray_signal1);
-        
-        timeStampArray_signal2(idx)=[]
-        
-    elseif numel(timeStampArray_signal1) >  numel(timeStampArray_signal2)
-        
-    end
-%}
     
     % set up final return arrays - keep these as matrices
     dataArray            = [];
