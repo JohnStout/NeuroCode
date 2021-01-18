@@ -211,18 +211,9 @@ histogram(timeConv,20,'FaceColor','m')
 
 
 figure('color','w')
-plot(prob_observe,'k','LineWidth',2)
+plot(prob_observe)
 box off
-ylabel('Coherence Magnitude')
-xlabel('Duration Possibilities (ms)')
-axes = gca;
-axes.XTick = [1:maxTime];
-for i = 1:maxTime
-    axes.XTickLabel{i} = i*amountOfData;
-end
-axes.XTickLabelRotation = 45;
-
-
+ylabel('COheren
 
     
 %% script function
