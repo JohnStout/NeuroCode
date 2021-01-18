@@ -69,10 +69,6 @@ end
 
 % histogram of sampled times
 figure('color','w')
-histogram(timeConv,20,'FaceColor','m')
-
-
-figure('color','w')
 plot(prob_observe,'k','LineWidth',2)
 box off
 ylabel('Coherence Magnitude')
