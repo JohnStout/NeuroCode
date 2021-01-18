@@ -19,9 +19,9 @@
 %
 
 
-function [succeeded, dataArray, timeStampArray, channelNumberArray, samplingFreqArray, numValidSamplesArray, numRecordsReturned, numRecordsDropped , funDur, error_out] = NlxGetNewCSCData_2signals(objectName1, objectName2)  
+function [succeeded, dataArray, timeStampArray, channelNumberArray, samplingFreqArray, numValidSamplesArray, numRecordsReturned, numRecordsDropped , error_out] = NlxGetNewCSCData_2signals(objectName1, objectName2)  
 
-    tic;
+    %tic;
 	
 	%get buffer sizes from NetCom DLL
 	bufferSize = calllib('MatlabNetComClient', 'GetRecordBufferSize');
@@ -294,6 +294,6 @@ function [succeeded, dataArray, timeStampArray, channelNumberArray, samplingFreq
     numRecordsDropped(2,:) = numRecordsDropped_signal2;
     
     % track time
-    funDur = toc;
+    %funDur = toc;
     
 end

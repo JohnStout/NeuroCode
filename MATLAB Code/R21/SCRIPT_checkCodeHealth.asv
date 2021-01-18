@@ -173,7 +173,7 @@ idxEnd = []; idxRem = [];
 for i = 1:length(idxStart)
     restOfData  = []; idxBelowAll = []; idxBelow = [];
     restOfData  = coh(idxStart(i):length(coh));
-    idxBelowAll = find(restOfData > cohLowVal);
+    idxBelowAll = find(restOfData < cohLowVal);
     % sometimes a ripple continues outside of your window. remove that
     % event
     if isempty(idxBelowAll)
@@ -212,5 +212,5 @@ cohLowDurVal = cohDur(dsearchn(lowCohDurZ',1));
 
 % plt line
 ylimits = ylim;
-line([cohLowDurVal cohLowDurVal], [ylimits(1) ylimits(2)], 'Color', 'k', 'LineStyle', '--', 'LineWidth', 2);
-text(2,600,['Duration 1std = ',num2str(cohLowDurVal), ' sec'])
+line([cohHighDurVal cohHighDurVal], [ylimits(1) ylimits(2)], 'Color', 'k', 'LineStyle', '--', 'LineWidth', 2);
+text(2,600,['Duration 1std = ',num2str(cohHighDurVal), ' sec'])

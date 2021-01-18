@@ -13,7 +13,7 @@ LFP2name = 'CSC9';
 %% coherence detection
 
 % for multitapers
-params.tapers = [3 5]; % changed as of 1/18/21
+params.tapers = [3 5]; 
 params.Fs     = srate;
 params.fpass  = [4 12];
 
