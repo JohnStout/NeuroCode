@@ -56,7 +56,7 @@ function [succeeded, dataArray, timeStampArray, channelNumberArray, samplingFreq
     % signal 1's first record matches signal 2's first record, but not
     % signal 2's second record
     if (numRecordsReturned_signal2 ~= numRecordsReturned_signal1) && (numRecordsReturned_signal2 > numRecordsReturned_signal1) && (timeStampArray_signal1(1) == timeStampArray_signal2(1)) && (timeStampArray_signal1(1) ~= timeStampArray_signal2(2))
-        disp('Signal 1 record 1 matches signal 2 record 1')
+        %disp('Signal 1 record 1 matches signal 2 record 1')
         %error('test me')
         error_out = 1;
         
@@ -97,7 +97,7 @@ function [succeeded, dataArray, timeStampArray, channelNumberArray, samplingFreq
     % signal 1's first record matches signal 2's second record, but signal 1's first record
     % does not match signal 2's first record
     elseif (numRecordsReturned_signal2 ~= numRecordsReturned_signal1) && (numRecordsReturned_signal2 > numRecordsReturned_signal1) && (timeStampArray_signal1(1) == timeStampArray_signal2(2)) && (timeStampArray_signal1(1) ~= timeStampArray_signal2(1))
-        disp('Signal1 record 1 matches signal 2 record 2')
+        %disp('Signal1 record 1 matches signal 2 record 2')
         %error('test me')
         error_out = 2;
 
@@ -141,7 +141,7 @@ function [succeeded, dataArray, timeStampArray, channelNumberArray, samplingFreq
     % signal 2's first record matches signal 1's second record, but signal
     % 2's first record does not match signal 1's first record
     elseif (numRecordsReturned_signal2 ~= numRecordsReturned_signal1) && (numRecordsReturned_signal2 < numRecordsReturned_signal1) && (timeStampArray_signal1(2) == timeStampArray_signal2(1))  && (timeStampArray_signal1(1) ~= timeStampArray_signal2(1))
-        disp('Signal1 record 2 matches signal 2 record 1')
+        %disp('Signal1 record 2 matches signal 2 record 1')
         %error('test me')
         error_out = 3;
         
@@ -181,7 +181,7 @@ function [succeeded, dataArray, timeStampArray, channelNumberArray, samplingFreq
        
     % signal 2 record 1 matches signal 1 record 1 but not signal 1 record 2
     elseif (numRecordsReturned_signal2 ~= numRecordsReturned_signal1) && (numRecordsReturned_signal2 < numRecordsReturned_signal1) && (timeStampArray_signal1(1) == timeStampArray_signal2(1)) && (timeStampArray_signal1(2) ~= timeStampArray_signal2(1))
-        disp('Signal 2 record 1 matches signal 1 record 1')
+        %disp('Signal 2 record 1 matches signal 1 record 1')
         %error('test me')
         error_out = 4;
        
@@ -221,7 +221,7 @@ function [succeeded, dataArray, timeStampArray, channelNumberArray, samplingFreq
        
     % everything is formatted correctly    
     else
-        disp('Everything is good')
+        %disp('Everything is good')
         error_out = 0;
         
         

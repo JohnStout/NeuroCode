@@ -1,7 +1,5 @@
 %% get_realTimeCoherence
 
-
-
 %% initialize
 clear; clc
 

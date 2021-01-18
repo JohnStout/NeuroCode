@@ -140,7 +140,6 @@ for i = 1:length(timeStamps)
 end
 
 
-
 % remove path of github download directory
 rmpath(github_download_directory);
 

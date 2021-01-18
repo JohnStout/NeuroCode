@@ -100,7 +100,7 @@ title(['Events streamed at a rate of ', num2str(amountOfData),' seconds'])
 
 % get above threshold
 idxAbove = [];
-idxAbove = find(coh >= cohHighVal);
+idxAbove = find(coh > cohHighVal);
 
 % in other words, how long was coherence >1std or <1std?
 % define std_above_mean start time
@@ -159,7 +159,7 @@ text(2,600,['Duration 1std = ',num2str(cohHighDurVal), ' sec'])
 
 % get above threshold
 idxAbove = [];
-idxAbove = find(coh <= cohLowVal);
+idxAbove = find(coh < cohLowVal);
 
 % in other words, how long was coherence >1std or <1std?
 % define std_above_mean start time
