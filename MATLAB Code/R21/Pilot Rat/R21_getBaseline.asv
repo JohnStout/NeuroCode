@@ -1,11 +1,20 @@
-%% get_realTimeCoherence
-clear; clc
+%% get_baseline
+% this code is designed to assign threshold variable
+%
+% -- INPUTS -- %
+% LFP1name:
+% LFP2name:
+% amountOfData: specified in seconds. Use 0.25 for .25 sec
+% amountOfTime: how much time do you want this code to be run on? Try 10 for
+%               10 minutes
+%
+% -- OUTPUTS -- %
+% threshold: coherence thresholds
+%
+% written by John Stout 
+% last edit 1/19/21
 
-%% initialize
-
-% define LFPs to use
-LFP1name = 'CSC1';
-LFP2name = 'CSC9';
+function [threshold] = R21_getBaseline(LFP1name,LFP2name,amountOfData,amountOfTime)
 
 % setup
 [srate,timing] = realTimeDetect_setup(LFP1name,LFP2name,0.25);
@@ -18,16 +27,16 @@ params.Fs     = srate;
 params.fpass  = [4 12];
 
 % define a looping time
-loop_time = 60*4; % minutes - note that this isn't perfect, but its a few seconds behind dependending on the length you set. The lag time changes incrementally because there is a 10-20ms processing time that adds up
+%loop_time = 60*amountOfTime; % minutes - note that this isn't perfect, but its a few seconds behind dependending on the length you set. The lag time changes incrementally because there is a 10-20ms processing time that adds up
 
 % define amount of data to collect
-amountOfData = .25; % seconds
+%amountOfData = .25; % seconds
 
 % define number of samples that correspond to the amount of data in time
 numSamples2use = amountOfData*srate;
 
 % define for loop
-looper = (loop_time*60)/amountOfData; % N minutes * 60sec/1min * (1 loop is about .250 ms of data)
+looper = ceil((amountOfTime*60)/amountOfData); % N minutes * 60sec/1min * (1 loop is about .250 ms of data)
 
 %% now add/remove time and calculate coherence
     
@@ -61,29 +70,9 @@ for i = 1:looper
     else
         
     end
-
-    % sometimes when collecting data, it will fail. But eventually, it will
-    % collect the data successfully. It's not clear if the instance of
-    % failing to collect the data results in lost data, or if its collected
-    % later
-    %{
-    pause(0.25);
-    next = 0;
-    while next == 0
-        try
-            [~, dataArray_new, timeStampArray, ~, ~, ...
-            numValidSamplesArray, numRecordsReturned, numRecordsDropped , funDur.getData ] = NlxGetNewCSCData_2signals(LFP1name, LFP2name);  
-            next = 1;
-        catch
-            [~, dataArray_new, timeStampArray, ~, ~, ...
-            numValidSamplesArray, numRecordsReturned, numRecordsDropped , funDur.getData ] = NlxGetNewCSCData_2signals(LFP1name, LFP2name);  
-            next = 1;
-        end  
-    end
-    %}
     
     % running this a ton of times until we get failures          
-    pause(.25);
+    pause(amountOfData);
     [~, dataArray_new, timeStampArray, ~, ~, ...
     numValidSamplesArray, numRecordsReturned, numRecordsDropped , funDur.getData ] = NlxGetNewCSCData_2signals(LFP1name, LFP2name);  
 
@@ -103,7 +92,7 @@ for i = 1:looper
     %[coh(i+1),phase,~,~,~,freq] = coherencyc(dataArray(1,:),dataArray(2,:),params);
     coh_temp = [];
     coh_temp = coherencyc(dataArray(1,:),dataArray(2,:),params);
-    coh(i+1) = nanmean(coh_temp);
+    coh(i) = nanmean(coh_temp);
     
     % amount of data in consideration
     timings(i) = length(dataArray)/srate;
@@ -153,7 +142,7 @@ zscoredCoh = zscore(coh);
 cohHighStd = coh(zscoredCoh > 1);
 cohHighVal = coh(dsearchn(zscoredCoh',1));
 % plot
-h_highS = histogram(cohHighStd,'FaceColor',[0 .6 0]);
+h_highS = histogram(cohHighStd,'FaceColor','b');
 h_highS.BinWidth = h_og.BinWidth;
 % get -1std
 cohLowStd = coh(zscoredCoh < -1);
@@ -170,12 +159,12 @@ xlabel('Coherence magnitude')
 figure('color','w'); hold on;
 prob_high = numel(cohHighStd)/numel(coh);
 prob_low  = numel(cohLowStd)/numel(coh);
-bar(1,prob_high,'FaceColor',[0 .6 0]);
+bar(1,prob_high,'FaceColor','b');
 bar(2,prob_low,'FaceColor','r');
 ylabel('p(coherence)')
 axes = gca;
 axes.XTick = [ 1 2 ];
-axes.XTickLabel = [{'High Coherence'} {'Low Coherence'}]
+axes.XTickLabel = [{'High Coherence'} {'Low Coherence'}];
 axes.XTickLabelRotation = 45;
 
 %% coherence durations
@@ -251,6 +240,7 @@ for i = 1:length(idxStart)
     % event
     if isempty(idxBelowAll)
         idxRem(i) = 1;
+        disp(['error on ',num2str(i)])
         continue
     end
     idxBelow    = idxBelowAll(1);
@@ -298,6 +288,7 @@ idxAbove = find(coh < cohLowVal);
 idxDiff = []; idxChangeDiff = []; idxStart = [];
 idxDiff       = diff(idxAbove);
 idxChangeDiff = [1 find(idxDiff ~= 1)+1];
+idxStart      = [];
 idxStart      = idxAbove(idxChangeDiff);
 
 % get end of ripple event (dips below 1)
@@ -347,11 +338,13 @@ ylimits = ylim;
 line([cohLowDurVal cohLowDurVal], [ylimits(1) ylimits(2)], 'Color', 'k', 'LineStyle', '--', 'LineWidth', 2);
 text(2,600,['Duration 1std = ',num2str(cohLowDurVal), ' sec'])
 
-
 %% define outs - make this an output of this function
-threshold.coherence_mag_high = cohHighDurVal;
-threshold.coherence_mag_low  = cohLowDurVal;
+threshold.high_coherence_magnitude = cohHighVal;
+threshold.low_coherence_magnitude  = cohLowVal;
 
-% remove path of github download directory
-rmpath(github_download_directory);
+threshold.high_coherence_longDuration = cohHighDurVal;
+threshold.low_coherence_longDuration  = cohLowDurVal;
+
+% defined as the smallest sampling range
+threshold.short_duration = amountOfData;
 
