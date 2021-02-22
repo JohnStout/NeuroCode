@@ -51,6 +51,7 @@ writeline(maze,[doorFuns.centralClose doorFuns.sbLeftClose ...
 pause(0.25)
 writeline(maze,[doorFuns.gzLeftClose doorFuns.gzRightClose])
 
+%{
 % reward dispensers need about 3 seconds to release pellets
 for rewardi = 1:pellet_count
     disp('Prepping reward wells, this may take a few seconds...')
@@ -59,6 +60,7 @@ for rewardi = 1:pellet_count
     writeline(maze,rewFuns.left)
     pause(4)
 end
+%}
 
 %% create a random organization of forced run trajectories
 left  = repmat('L',[numTrials/2 1]);
