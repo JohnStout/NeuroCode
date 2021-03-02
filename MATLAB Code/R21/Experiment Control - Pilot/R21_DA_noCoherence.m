@@ -1,6 +1,5 @@
 % Alternation task
 % written by John Stout
-
 clear; clc
 
 %% some parameters set by the user
@@ -10,8 +9,8 @@ pellet_count = 1;
 timeout_len  = 60*5;
 
 % define LFPs to use
-LFP1name = 'CSC6';  % hpc
-LFP2name = 'CSC10'; % pfc
+LFP1name = 'CSC1';
+LFP2name = 'CSC9';
 
 % for multitapers
 params.tapers = [3 5]; 
@@ -26,9 +25,6 @@ amountOfTime_baseline = 10; % minutes
 
 % define a looping time - this is in minutes
 amountOfTime = .84; % 0.84 is 50/60secs, to account for initial pause of 10sec .25; % minutes - note that this isn't perfect, but its a few seconds behind dependending on the length you set. The lag time changes incrementally because there is a 10-20ms processing time that adds up
-
-%% run baseline - this code gives us our thresholds
-threshold = R21_getBaseline(LFP1name,LFP2name,amountOfData,amountOfTime_baseline);
 
 %% experiment design prep.
 % 5 conditions:
@@ -95,23 +91,6 @@ for i = 1:10000000
     readDigitalPin(a,irArduino.Treadmill)
 end
 %}
-
-%% coherence detection prep.
-
-% set up with neuralynx
-[srate,timing] = realTimeDetect_setup(LFP1name,LFP2name,amountOfData);
-
-% define sampling rate
-params.Fs     = srate;
-
-% define number of samples that correspond to the amount of data in time
-numSamples2use = amountOfData*srate;
-
-% define for loop
-looper = ceil((amountOfTime*60)/amountOfData); % N minutes * 60sec/1min * (1 loop is about .250 ms of data)
-
-% define total loop time
-total_loop_time = amountOfTime*60; % in seconds
 
 %% clean the stored data just in case IR beams were broken
 s.Timeout = 1; % 1 second timeout
@@ -330,6 +309,9 @@ for triali = 1:numTrials
                 elseif isempty(irTemp)==1 && readDigitalPin(a,irArduino.Treadmill) == 1
                     next_tread = 0;
                 end
+                
+                
+                
             end
             
             next = 1;
@@ -338,54 +320,10 @@ for triali = 1:numTrials
     
     % reset timeout
     s.Timeout = timeout_len;
-    
-    % initialize some variables
-    timeStamps = []; timeConv  = [];
-    coh_met    = []; coh_store = [];
-    dur_met    = []; dur_sum   = [];    
+ 
     % only during delayed alternations will you start the treadmill
-    if delay_length > 1
-        
-        % use tic toc to store timing for yoked control
-        tic;
-        
-        % low coherence, short duration
-        if contains(trial_type{triali},low_short{1})
-            [coh_trial{triali},timeConv{triali}] = lowCoherenceShortDuration(LFP1name,LFP2name,delay_length,looper,amountOfData);
-        elseif contains(trial_type{triali},low_long{1})
-            [coh_trial{triali},timeConv{triali}] = lowCoherenceLongDuration(LFP1name,LFP2name,delay_length,looper,amountOfData);
-       elseif contains(trial_type{triali},high_short{1})
-            [coh_trial{triali},timeConv{triali}] = HighCoherenceShortDuration(LFP1name,LFP2name,delay_length,looper,amountOfData);
-        elseif contains(trial_type{triali},high_long{1})
-            [coh_trial{triali},timeConv{triali}] = HighCoherenceLongDuration(LFP1name,LFP2name,delay_length,looper,amountOfData);      
-        elseif contains(trial_type{triali},'NO')
-            % match previous trial durations, when you use one, replace it
-            % with a nan so you know not to use that duration twice
-            for withini = 1:triali-1 % get all trials except the one you're on (which is a NO threshold trial)
-                if contains(trial_type{withini},'NO') == 0 & isnan(delay_duration_manipulate(withini)) == 0 % if withini is not a NO trial and the value for delay duration exists
-                    % pause to match a past experimental condition
-                    pause(delay_duration_manipulate(withini));
-                    
-                    % replace the manipulate variable time with NaN
-                    delay_duration_manipulate(withini) = NaN;
-
-                    % finally, break out of the for loop so that we don't
-                    % keep looping and pausing
-                    break;
-                else
-                    % if no other conditions are met, then just wait for 30
-                    % seconds
-                    pause(30);
-                    
-
-                end
-            end
-            
-            % out time
-            delay_duration_master(triali)     = toc;
-            delay_duration_manipulate(triali) = toc; % this one will change            
-  
-        end
+    if delay_length > 1   
+       pause(1);
     end                         
 end
 

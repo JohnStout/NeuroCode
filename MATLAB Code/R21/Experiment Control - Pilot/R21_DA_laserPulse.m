@@ -330,6 +330,10 @@ for triali = 1:numTrials
                 elseif isempty(irTemp)==1 && readDigitalPin(a,irArduino.Treadmill) == 1
                     next_tread = 0;
                 end
+                
+            % laser pulse
+             %NlxSendCommand('-DigitalIOTtlPulse AcqSystem1_0 0 0 High'); % turns on for specific duration then off automatically            
+                
             end
             
             next = 1;
